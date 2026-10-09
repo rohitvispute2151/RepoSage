@@ -1,0 +1,13 @@
+# CI Quality Gate assertion thresholds for RepoSage
+fix_smoke:
+  resolve_rate_pass1:
+    min_delta: -0.05
+  invariants: all_true
+
+qa_smoke:
+  citation_validity:
+    min: 0.98
+
+retrieval:
+  symbol_recall_at_5:
+    min_delta: -0.03

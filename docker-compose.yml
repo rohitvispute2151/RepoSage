@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: reposage
+      POSTGRES_USER: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    command: uvicorn reposage.api.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/reposage
+      - REDIS_URL=redis://redis:6379/0
+
+  worker:
+    build: .
+    command: celery -A reposage.workers.celery_app worker -c 4 -l info
+    depends_on:
+      - postgres
+      - redis
+      - sandbox-runner
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/reposage
+      - REDIS_URL=redis://redis:6379/0
+      - SANDBOX_URL=http://sandbox-runner:9000
+
+  beat:
+    build: .
+    command: celery -A reposage.workers.celery_app beat -l info
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/reposage
+      - REDIS_URL=redis://redis:6379/0
+
+  mcp-tools:
+    build: .
+    command: python -m reposage.tools.server
+    depends_on:
+      - postgres
+
+  sandbox-runner:
+    build: .
+    command: uvicorn reposage.sandbox.runner_service:app --host 0.0.0.0 --port 9000
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - repos:/repos:ro
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+
+volumes:
+  pgdata:
+  repos:

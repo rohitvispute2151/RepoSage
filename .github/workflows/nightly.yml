@@ -1,0 +1,24 @@
+name: RepoSage Nightly Evaluation
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # Daily at 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  nightly_eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run full retrieval evaluation
+        run: uv run python -m reposage.evals.cli run --suite retrieval_v1 --label nightly
+
+      - name: Assert full benchmark gate
+        run: uv run python -m reposage.evals.cli gate --suite fix_smoke --thresholds gate.yaml

@@ -1,0 +1,21 @@
+# Isolated execution environment for RepoSage test evaluation
+FROM python:3.12-slim
+
+# Install minimal test execution dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create unprivileged sandbox user
+RUN useradd -u 10001 -m -s /bin/bash sandboxuser
+
+# Pre-install pytest and test reporting libraries
+RUN pip install --no-cache-dir pytest pytest-xdist pytest-timeout
+
+# Run as unprivileged user by default
+USER 10001:10001
+WORKDIR /work
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV HOME=/tmp
