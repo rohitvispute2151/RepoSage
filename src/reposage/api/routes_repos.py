@@ -6,12 +6,14 @@ from pathlib import Path
 import shutil
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Literal, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from reposage.api.deps import verify_api_key
-from reposage.api.schemas import RepoCreate, RepoSnapshotResponse
+from reposage.api.schemas import RepoCreate, RepoListItem, RepoListResponse, RepoSnapshotResponse
 from reposage.config import settings
 from reposage.db.models import Chunk, Repo, RepoSnapshot
 from reposage.db.session import async_session_factory, get_db
@@ -121,6 +123,52 @@ async def create_repo(
     asyncio.create_task(_run_ingest())
 
     return RepoSnapshotResponse.model_validate(snapshot, from_attributes=True)
+
+
+@router.get(
+    "",
+    response_model=RepoListResponse,
+    dependencies=[Depends(verify_api_key)],
+)
+async def list_repos(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    status_filter: Optional[Literal["queued", "ingesting", "ready", "failed"]] = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db),
+) -> RepoListResponse:
+    """List registered repository snapshots, newest first, with name, source, commit, status and chunk count."""
+    chunk_counts = (
+        select(Chunk.snapshot_id, func.count(Chunk.id).label("n")).group_by(Chunk.snapshot_id).subquery()
+    )
+    base = select(RepoSnapshot, Repo, func.coalesce(chunk_counts.c.n, 0)).join(
+        Repo, Repo.id == RepoSnapshot.repo_id
+    ).outerjoin(chunk_counts, chunk_counts.c.snapshot_id == RepoSnapshot.id)
+    count_stmt = select(func.count(RepoSnapshot.id))
+    if status_filter:
+        base = base.where(RepoSnapshot.status == status_filter)
+        count_stmt = count_stmt.where(RepoSnapshot.status == status_filter)
+
+    total = int(await db.scalar(count_stmt) or 0)
+    rows = (
+        await db.execute(
+            base.order_by(RepoSnapshot.created_at.desc(), RepoSnapshot.id).limit(limit).offset(offset)
+        )
+    ).all()
+    items = [
+        RepoListItem(
+            id=snap.id,
+            repo_id=repo.id,
+            name=repo.name,
+            source_uri=repo.source_uri,
+            commit_sha=snap.commit_sha,
+            status=snap.status,
+            error=snap.error,
+            chunk_count=int(n),
+            created_at=snap.created_at,
+        )
+        for snap, repo, n in rows
+    ]
+    return RepoListResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get(

@@ -104,3 +104,47 @@ async def test_create_repo_endpoint(client: AsyncClient, tmp_path, monkeypatch):
         data = resp.json()
         assert data["commit_sha"] == "abc1234567890"
         assert data["status"] == "queued"
+
+
+@pytest.mark.asyncio
+async def test_list_repos_newest_first_with_paging_and_filter(client: AsyncClient, async_db: AsyncSession):
+    """GET /v1/repos lists snapshots with their repo name, newest first, and honours limit/offset/status."""
+    from datetime import datetime, timedelta, timezone
+
+    headers = {"X-API-Key": settings.api_key}
+    repo = Repo(name="svc", source_uri="https://example.com/svc.git")
+    other = Repo(name="lib", source_uri="/srv/lib")
+    async_db.add_all([repo, other])
+    await async_db.flush()
+    now = datetime.now(timezone.utc)
+    snaps = [
+        RepoSnapshot(repo_id=repo.id, commit_sha="aaaaaaa", status="ready", mirror_path="/m/1", created_at=now - timedelta(minutes=3)),
+        RepoSnapshot(repo_id=repo.id, commit_sha="bbbbbbb", status="failed", mirror_path="/m/2", error="boom", created_at=now - timedelta(minutes=2)),
+        RepoSnapshot(repo_id=other.id, commit_sha="ccccccc", status="ready", mirror_path="/m/3", created_at=now - timedelta(minutes=1)),
+    ]
+    async_db.add_all(snaps)
+    await async_db.commit()
+
+    resp = await client.get("/v1/repos", headers=headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 3
+    assert [i["commit_sha"] for i in body["items"]] == ["ccccccc", "bbbbbbb", "aaaaaaa"]
+    assert body["items"][0]["name"] == "lib" and body["items"][0]["source_uri"] == "/srv/lib"
+    assert body["items"][1]["error"] == "boom"
+    assert "mirror_path" not in body["items"][0]
+
+    page = (await client.get("/v1/repos", params={"limit": 1, "offset": 1}, headers=headers)).json()
+    assert page["total"] == 3 and [i["commit_sha"] for i in page["items"]] == ["bbbbbbb"]
+
+    ready = (await client.get("/v1/repos", params={"status": "ready"}, headers=headers)).json()
+    assert ready["total"] == 2 and {i["commit_sha"] for i in ready["items"]} == {"aaaaaaa", "ccccccc"}
+
+
+@pytest.mark.asyncio
+async def test_list_repos_requires_key_and_validates_params(client: AsyncClient):
+    assert (await client.get("/v1/repos")).status_code == 401
+    assert (await client.get("/v1/repos", headers={"X-API-Key": "wrong"})).status_code == 403
+    headers = {"X-API-Key": settings.api_key}
+    assert (await client.get("/v1/repos", params={"limit": 0}, headers=headers)).status_code == 422
+    assert (await client.get("/v1/repos", params={"status": "nope"}, headers=headers)).status_code == 422

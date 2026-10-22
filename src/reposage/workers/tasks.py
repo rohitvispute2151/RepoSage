@@ -28,6 +28,7 @@ from reposage.observability.metrics import task_resumes_total
 from reposage.observability.tracing import tracer
 from reposage.sandbox.client import SandboxClient
 from reposage.workers.celery_app import celery_app
+from reposage.workers.events import EventRecorder
 from reposage.workers.lease import TaskLeaseManager
 
 
@@ -43,6 +44,8 @@ async def _run_task_async(task_id_str: str, approval_id: Optional[str] = None) -
         if not acquired:
             logger.info(f"Task {task_id} is currently locked by another worker.")
             return
+
+        recorder: Optional[EventRecorder] = None
 
         # Start background lease renewal heartbeat loop
         renew_task = asyncio.create_task(
@@ -100,8 +103,9 @@ async def _run_task_async(task_id_str: str, approval_id: Optional[str] = None) -
             budget_mgr = BudgetManager()
             sandbox_cli = SandboxClient(base_url=settings.sandbox_url)
 
-            def event_sink(t_id: str, etype: str, payload: dict[str, Any]):
-                pass
+            recorder = EventRecorder(task_id_str)
+            await recorder.start()
+            event_sink = recorder.sink
 
             deps = AgentDependencies(
                 db=db,
@@ -172,6 +176,8 @@ async def _run_task_async(task_id_str: str, approval_id: Optional[str] = None) -
                 await graph.ainvoke(initial_state, config)
 
         finally:
+            if recorder is not None:
+                await recorder.close()
             renew_task.cancel()
             try:
                 await renew_task

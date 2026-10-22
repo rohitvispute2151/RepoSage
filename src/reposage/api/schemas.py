@@ -28,6 +28,29 @@ class RepoSnapshotResponse(BaseModel):
     created_at: datetime
 
 
+class RepoListItem(BaseModel):
+    """One registered snapshot with the repository it belongs to, for listing screens."""
+
+    id: uuid.UUID
+    repo_id: uuid.UUID
+    name: str
+    source_uri: str
+    commit_sha: str
+    status: str
+    error: Optional[str] = None
+    chunk_count: int = 0
+    created_at: datetime
+
+
+class RepoListResponse(BaseModel):
+    """A page of registered snapshots, newest first."""
+
+    items: list[RepoListItem]
+    total: int
+    limit: int
+    offset: int
+
+
 class Budgets(BaseModel):
     """Resource limits allocated to an individual task."""
 

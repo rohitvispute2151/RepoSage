@@ -1,6 +1,5 @@
 """Report node synthesizing final verified answers, citations, and execution summaries."""
 
-import json
 from pathlib import Path
 import time
 from typing import Any
@@ -8,6 +7,7 @@ import uuid
 
 from sqlalchemy import update
 
+from reposage.agent.answer_parse import parse_answer_payload
 from reposage.agent.citations import Citation, verify_citation
 from reposage.agent.nodes import AgentDependencies
 from reposage.agent.state import AgentState
@@ -106,11 +106,13 @@ def report_node(deps: AgentDependencies):
             citations_list: list[dict[str, Any]] = []
 
             # Parse citations from structured or semi-structured model output
-            try:
-                parsed_ans = json.loads(answer_text)
-                answer_text = parsed_ans.get("answer", answer_text)
-                raw_cites = parsed_ans.get("citations", [])
-            except Exception:
+            parsed_ans = parse_answer_payload(answer_text)
+            found = True
+            if parsed_ans is not None and isinstance(parsed_ans.get("answer"), str):
+                answer_text = parsed_ans["answer"]
+                raw_cites = parsed_ans.get("citations") or []
+                found = parsed_ans.get("found", True) is not False
+            else:
                 raw_cites = [
                     {
                         "path": e["path"],
@@ -137,6 +139,7 @@ def report_node(deps: AgentDependencies):
                     continue
 
             final_result["answer"] = answer_text
+            final_result["found"] = found
             final_result["citations"] = verified_cites
             outcome = "answered"
 

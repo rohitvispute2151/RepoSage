@@ -1,0 +1,209 @@
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+@import 'tailwindcss';
+
+/*
+ * RepoSage design system: "Obsidian & Signal".
+ * Components use semantic names only; values flip per theme. Every text/background pair is checked by axe in both
+ * themes (e2e/mock/a11y.spec.ts), so change values here, never hard-code colours in components.
+ */
+:root {
+  color-scheme: light;
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #f0eee9;
+  --surface-3: #e7e4dc;
+  --border: #d9d5ca;
+  --border-strong: #c3beb0;
+  --fg: #14171c;
+  --muted: #565f6e;
+  --accent: #0a7a5c;
+  --accent-fg: #ffffff;
+  --accent-soft: #d9f1e8;
+  --success: #0b6b43;
+  --success-bg: #dcf3e6;
+  --warning: #814300;
+  --warning-bg: #fbecc6;
+  --danger: #b0231b;
+  --danger-bg: #fde5e2;
+  --info: #1d4fb8;
+  --info-bg: #e1ecff;
+  --focus: #0a7a5c;
+  --glow-1: rgb(10 122 92 / 0.1);
+  --glow-2: rgb(29 79 184 / 0.07);
+  --dot: rgb(20 23 28 / 0.07);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 1px 2px rgb(20 23 28 / 0.05), 0 8px 24px -12px rgb(20 23 28 / 0.12);
+  --shadow-pop: 0 24px 60px -20px rgb(20 23 28 / 0.35);
+  /* syntax colours, chosen to clear 4.5:1 on the add/del/context diff backgrounds */
+  --syn-kw: #7a2bb3;
+  --syn-str: #0a6a45;
+  --syn-num: #a04400;
+  --syn-com: #5b6472;
+  --syn-fn: #1d4fb8;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #07090d;
+  --surface: #0e1219;
+  --surface-2: #141a24;
+  --surface-3: #1b2331;
+  --border: #232c3c;
+  --border-strong: #34405a;
+  --fg: #eef1f6;
+  --muted: #9ba6b9;
+  --accent: #4ff0b7;
+  --accent-fg: #04120c;
+  --accent-soft: #0c2a22;
+  --success: #62e3a3;
+  --success-bg: #0b2a1d;
+  --warning: #f6c453;
+  --warning-bg: #2c2108;
+  --danger: #ff9086;
+  --danger-bg: #331412;
+  --info: #84b8ff;
+  --info-bg: #0f2142;
+  --focus: #4ff0b7;
+  --glow-1: rgb(79 240 183 / 0.09);
+  --glow-2: rgb(110 120 255 / 0.1);
+  --dot: rgb(255 255 255 / 0.045);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -16px rgb(0 0 0 / 0.7);
+  --shadow-pop: 0 28px 70px -20px rgb(0 0 0 / 0.85);
+  --syn-kw: #d6a8ff;
+  --syn-str: #8fe3b4;
+  --syn-num: #ffb673;
+  --syn-com: #93a0b4;
+  --syn-fn: #8fc1ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+    --bg: #07090d;
+    --surface: #0e1219;
+    --surface-2: #141a24;
+    --surface-3: #1b2331;
+    --border: #232c3c;
+    --border-strong: #34405a;
+    --fg: #eef1f6;
+    --muted: #9ba6b9;
+    --accent: #4ff0b7;
+    --accent-fg: #04120c;
+    --accent-soft: #0c2a22;
+    --success: #62e3a3;
+    --success-bg: #0b2a1d;
+    --warning: #f6c453;
+    --warning-bg: #2c2108;
+    --danger: #ff9086;
+    --danger-bg: #331412;
+    --info: #84b8ff;
+    --info-bg: #0f2142;
+    --focus: #4ff0b7;
+    --glow-1: rgb(79 240 183 / 0.09);
+    --glow-2: rgb(110 120 255 / 0.1);
+    --dot: rgb(255 255 255 / 0.045);
+    --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -16px rgb(0 0 0 / 0.7);
+    --shadow-pop: 0 28px 70px -20px rgb(0 0 0 / 0.85);
+    --syn-kw: #d6a8ff;
+    --syn-str: #8fe3b4;
+    --syn-num: #ffb673;
+    --syn-com: #93a0b4;
+    --syn-fn: #8fc1ff;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-feature-settings: 'ss01', 'cv11'; -webkit-font-smoothing: antialiased; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  background-image:
+    radial-gradient(60rem 36rem at 12% -8%, var(--glow-1), transparent 60%),
+    radial-gradient(48rem 30rem at 100% 0%, var(--glow-2), transparent 55%),
+    radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px;
+  background-attachment: fixed;
+}
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+code, pre, kbd { font-family: var(--font-mono); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+.skip-link { position: absolute; left: -999px; top: 0; background: var(--accent); color: var(--accent-fg); padding: .5rem .75rem; z-index: 60; border-radius: 0 0 8px 0; }
+.skip-link:focus { left: 0; top: 0; }
+
+/* ---- shared building blocks ---- */
+.card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent) 1.5%), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.card-flat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.eyebrow { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.field {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.875rem;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.field::placeholder { color: color-mix(in srgb, var(--muted) 85%, transparent); }
+.field:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border-strong)); }
+.field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent); }
+.field[aria-invalid='true'] { border-color: var(--danger); }
+.chip { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; padding: .15rem .65rem; font-size: .75rem; font-weight: 600; }
+.hash-chip { display: inline-flex; align-items: center; gap: .4rem; max-width: 100%; border: 1px solid var(--border-strong); background: var(--surface-2); border-radius: 8px; padding: .2rem .55rem; font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.link { color: var(--accent); text-underline-offset: 3px; }
+.link:hover { text-decoration: underline; }
+
+/* The first element a route renders slides up. Transform only: fading opacity would make text momentarily fail contrast
+   checks (axe, Lighthouse) that sample mid-animation. */
+main > *:first-child { animation: rise .38s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+
+.live-dot { position: relative; display: inline-block; width: .5rem; height: .5rem; border-radius: 999px; background: currentColor; }
+.live-dot.still::after { display: none; }
+.live-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 999px; border: 1.5px solid currentColor; opacity: 0; animation: ping 1.8s cubic-bezier(0, 0, .2, 1) infinite; }
+@keyframes ping { 0% { transform: scale(.5); opacity: .7; } 80%, 100% { transform: scale(1.5); opacity: 0; } }
+
+.node-active { animation: node-glow 2.2s ease-in-out infinite; }
+@keyframes node-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--info) 22%, transparent); } }
+
+.tok-kw { color: var(--syn-kw); }
+.tok-str { color: var(--syn-str); }
+.tok-num { color: var(--syn-num); }
+.tok-com { color: var(--syn-com); font-style: italic; }
+.tok-fn { color: var(--syn-fn); }
+
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
