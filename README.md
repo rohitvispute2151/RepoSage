@@ -11,7 +11,7 @@ It is a full-stack system: FastAPI + Celery + Postgres/pgvector backend, a LangG
 
 ## The console
 
-The reviewer-facing UI (Vue 3, strict TypeScript). Screenshots come from the scripted mock server in `frontend/mock/`, which enforces the real API's rules; regenerate them with `bun run screenshots`.
+The reviewer-facing UI (Vue 3, strict TypeScript).
 
 | | |
 |---|---|
