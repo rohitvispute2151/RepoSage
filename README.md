@@ -114,39 +114,6 @@ cd frontend && bun run dev                           # console, proxies /v1 to :
 
 `docker-compose.yml` defines the services but the repo has no Dockerfile yet, so `docker compose build` does not work as committed. See below.
 
-## What works and what doesn't
-
-Honest status, because "it's in the diagram" is not the same as "it runs".
-
-| Area | Status |
-|---|---|
-| REST API: register/list repos, snapshot status, create task, status, SSE events, approval (hash-bound, 409 on stale), cancel | Built and tested |
-| Ingestion, hybrid retrieval, RRF fusion, query rewrite, rerank interface | Built; covered by integration tests |
-| Policy engine, patch validator, citation verifier, budget manager, loop detector, secret redaction | Built; unit and adversarial tests |
-| Agent graph (plan, retrieve, explore, patch, verify, approval, report) | Built; integration tests run it against a scripted LLM |
-| Durable event log and SSE with `Last-Event-ID` | Built and tested |
-| Review console (4 screens plus repos, new task, cancel, health) | Built and tested; developed against the OpenAPI schema and a contract-faithful mock |
-| Eval harness: bug injector, metrics, runner, CLI | Built; the `compare` CLI prints placeholder numbers and there is no eval API yet, so the console's eval view reads exports |
-| LangGraph checkpointer (Postgres) for crash-resume and approval pause/resume | **Not wired in the worker yet.** The graph is built without one, so the approval interrupt and crash-resume are designed but not working end to end |
-| Circuit breaker | Implemented, but the worker doesn't pass breakers to the LLM client yet |
-| Docker images and a running compose stack | **Missing Dockerfile**; the full stack has not been run end to end |
-| `tool_call` / `llm_call` / `budget` live events | In the design and supported by the console; not emitted by the worker yet |
-| Auth | Single shared API key; no submitter/approver roles |
-
-The console's `frontend/docs/BACKEND_CONTRACT.md` records the full code-vs-design discrepancy list found while integrating (14 items at the time of writing; some have since been fixed). I'd rather ship that list than hide it.
-
-## What I'd do next
-
-1. Wire `AsyncPostgresSaver` into the worker then cover crash-resume and approval-resume with integration tests against a real Postgres.
-2. Add the Dockerfile, bring up the compose stack, and run the Playwright golden path against it (the spec exists and skips with a reason when no stack is up).
-3. Emit `tool_call` and `budget` events from the policy layer and budget manager.
-4. Add eval endpoints so the compare view reads real runs, and publish a baseline-vs-rerank ablation table.
-5. Move the sandbox to its own host (or gVisor/Firecracker) before pointing it at untrusted repositories.
-
-## Tech stack
-
-Python 3.12, FastAPI, SQLAlchemy (async), Alembic, PostgreSQL + pgvector + pg_trgm, Redis, Celery, LangGraph, MCP, Docker SDK, sentence-transformers, Prometheus, pytest, uv. Frontend: Vue 3, TypeScript (strict), Vite, Bun, Pinia, TanStack Query, Tailwind, Reka UI, Zod, openapi-typescript + openapi-fetch, Vitest, MSW, Playwright, axe-core, Lighthouse CI.
-
 ## Layout
 
 ```text
