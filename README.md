@@ -7,8 +7,6 @@ RepoSage answers questions about a code repository and fixes failing tests. Its 
 
 It is a full-stack system: FastAPI + Celery + Postgres/pgvector backend, a LangGraph agent, a sandbox runner, an evaluation harness, and a Vue 3 + TypeScript review console.
 
-> **Not deployed, on purpose.** The sandbox executes model-written code in Docker, so it needs a dedicated host I'm not running for a portfolio project. This README is therefore the evidence: screenshots of the real UI, test counts you can reproduce, a [60-second local demo](#see-it-running-in-60-seconds-no-backend-needed), and a [candid status table](#what-works-and-what-doesnt) that says what is and isn't wired end to end.
-
 ## The console
 
 The reviewer-facing UI (Vue 3, strict TypeScript).
