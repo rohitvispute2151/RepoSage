@@ -156,6 +156,19 @@ async def get_task_events(
             # Check if task reached terminal status
             cur_task = await db.scalar(select(Task).where(Task.id == task_id))
             if cur_task and cur_task.status in terminal_statuses:
+                # The worker flushes its last queued events just after it marks the task terminal: give them a
+                # moment, then read once more so `done` is always the final event on the wire.
+                await asyncio.sleep(0.5)
+                tail = (
+                    await db.execute(
+                        select(TaskEvent)
+                        .where(TaskEvent.task_id == task_id, TaskEvent.seq > last_seq)
+                        .order_by(TaskEvent.seq.asc())
+                    )
+                ).scalars().all()
+                for ev in tail:
+                    last_seq = ev.seq
+                    yield f"id: {ev.seq}\nevent: {ev.type}\ndata: {json.dumps(ev.payload)}\n\n"
                 yield f"event: done\ndata: {json.dumps({'status': cur_task.status})}\n\n"
                 break
 

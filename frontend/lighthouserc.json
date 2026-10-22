@@ -1,0 +1,33 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "bun run scripts/lhci-serve.ts",
+      "startServerReadyPattern": "Local",
+      "startServerReadyTimeout": 60000,
+      "numberOfRuns": 3,
+      "url": [
+        "http://127.0.0.1:4173/",
+        "http://127.0.0.1:4173/repos",
+        "http://127.0.0.1:4173/tasks/new",
+        "http://127.0.0.1:4173/tasks/22222222-2222-4222-8222-222222222222/answer",
+        "http://127.0.0.1:4173/tasks/77777777-7777-4777-8777-777777777777/review",
+        "http://127.0.0.1:4173/evals/compare?a=run-baseline&b=run-rerank"
+      ],
+      "settings": { "chromeFlags": "--no-sandbox --headless=new" }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.9 }],
+        "categories:accessibility": ["error", { "minScore": 1 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "first-contentful-paint": ["error", { "maxNumericValue": 1800 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 200000 }],
+        "resource-summary:total:size": ["error", { "maxNumericValue": 250000 }]
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+  }
+}
