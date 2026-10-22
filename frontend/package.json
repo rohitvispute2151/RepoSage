@@ -18,6 +18,7 @@
     "test:e2e:stack": "playwright test -c playwright.stack.config.ts",
     "lhci": "bun run build && bun run scripts/lhci.ts",
     "mock": "bun run mock/server.ts",
+    "screenshots": "SHOTS=1 playwright test e2e/mock/screenshots.spec.ts",
     "verify": "bun run typecheck && bun run lint && bun run test && bun run test:bun && bun run build"
   },
   "dependencies": {
